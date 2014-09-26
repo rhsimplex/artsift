@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<script type="text/javascript">
+  $(function() {
+    var submit_form = function(e) {
+      $.getJSON($SCRIPT_ROOT + '/_get_artist_count', {
+        artistName: $('input[name="artistName"]').val(),
+      }, function(data) {
+        $('#artistCount').text(data.result);
+        $('input[name=artistName]').focus().select();
+      });
+      return false;
+    };
+
+    $('a#search').bind('click', submit_form);
+
+    $('input[type=text]').bind('keydown', function(e) {
+      if (e.keyCode == 13) {
+        submit_form(e);
+      }
+    });
+
+    $('input[name=a]').focus();
+  });
+</script>
+
+<script type="text/javascript">
+  $(function() {
+	var artistdata = [];
+    var submit_form = function(e) {
+      $.getJSON($SCRIPT_ROOT + '/_get_artist_data', {
+        artistName: $('input[name="artistName"]').val(),
+      }, function(data) {
+		  d3.select('div[id="artistplot"]').selectAll("p").remove()
+		  $.each(data.result, function(index, value){
+			  d3.select('div[id="artistplot"]').append("p").text(value.artTitle)
+		});
+      });
+      return false;
+    };
+
+    $('a#search').bind('click', submit_form);
+
+    $('input[type=text]').bind('keydown', function(e) {
+      if (e.keyCode == 13) {
+        submit_form(e);
+      }
+    });
+
+    $('input[name=a]').focus();
+  });
+</script>
+
+<h1>ArtSift 0.0.1</h1>
+<p>
+  <input type="text" size="40" name="artistName"><br>
+  <span id="artistCount">?</span>
+<p><a href=# id="search">search artist</a>
+<div id="artistplot"></div>
+{% endblock %}
