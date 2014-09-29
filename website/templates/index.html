@@ -27,15 +27,102 @@
 
 <script type="text/javascript">
   $(function() {
-	var artistdata = [];
-    var submit_form = function(e) {
+
+	
+   var submit_form = function(e) {
+	var w = 700
+	var h = 0.618 * w
+	var padding = 60
+	
+	d3.select("svg").remove()
+	
+    var svg = d3.select('div[id="artistplot"]')
+			.append("svg")
+			.attr("id", "artistPlot")
+			.attr("width", w)
+			.attr("height",h);
+	
+	var date_format = d3.time.format("%Y-%m-%d");
+	
+	var auction_dateFn = function(d){return date_format.parse(d.auctionDate)}
+	var auction_priceFnEUR = function(d){return d.priceEUR}
+	var auction_priceFn = function(d){return d.priceUSD}
+	var artTitle = function(d){return d.artTitle}
+	var compositionDate = function(d){
+		try {
+			var comp_date = parseInt(d.compositionDate);
+			if (comp_date > 100){
+				return comp_date;
+			}
+			else {
+				return -10000;
+			}
+		}
+		catch(err) {
+			return -10000;
+		}
+	}
       $.getJSON($SCRIPT_ROOT + '/_get_artist_data', {
         artistName: $('input[name="artistName"]').val(),
       }, function(data) {
-		  d3.select('div[id="artistplot"]').selectAll("p").remove()
-		  $.each(data.result, function(index, value){
-			  d3.select('div[id="artistplot"]').append("p").text(value.artTitle)
-		});
+		  var x = d3.time.scale()
+		  	.range([padding, w - padding])
+		  	.domain(d3.extent(data.result, auction_dateFn)).nice();
+
+		  var y = d3.scale.linear()
+			.range([h - padding, padding])
+			.domain(d3.extent(data.result, auction_priceFn)).nice();
+			
+		  var xAxis = d3.svg.axis().scale(x).orient("bottom");
+		  var yAxis = d3.svg.axis().scale(y).orient("left");
+
+		  
+		  svg.selectAll("circle").data(data.result)
+			.enter()
+			.append("svg:circle")
+			.attr("r",4)
+			.attr("cx", function(d) { return x(auction_dateFn(d)) })
+			.attr("cy", function(d) { return y(auction_priceFn(d)) })
+			.append("title").text(artTitle);
+			
+		  //svg.selectAll("text").data(data.result)
+			//.enter()
+			//.append("text")
+			//.text(artTitle)
+			//.attr("x", function(d) { return x(auction_dateFn(d)) })
+			//.attr("y", function(d) { return y(auction_priceFn(d)) });
+			
+		  svg.append("g")
+			.attr("class", "axis")
+			.attr("transform", "translate(0," + (h - padding + 10) + ")")
+			.call(xAxis);
+			
+		  svg.append("text")
+			.attr("class", "x_label")
+			.attr("text-anchor", "end")
+			.attr("x", w/2 + padding)
+			.attr("y", h)
+			.text("Auction Date")
+			
+		  svg.append("text")
+			.attr("id", "y_label")
+			.attr("text-anchor", "middle")
+			.attr("x", padding)
+			.attr("y", padding - 5)
+			.text("Price (USD)");
+			
+		  svg.append("g")
+			.attr("class", "axis")
+			.attr("transform", "translate(" + (padding - 10) + ", 0)")
+			.call(yAxis);
+		
+		  d3.select("svg").on("click", function() {
+			 if(d3.select("#y_label").text() == "Composition Date") {
+				 d3.select("#y_label").text("Price (USD)");
+			 } else {
+				d3.select("#y_label").text("Composition Date");
+			 }
+		  });
       });
       return false;
     };
