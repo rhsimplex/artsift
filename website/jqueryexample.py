@@ -28,7 +28,7 @@ def get_artist_data():
 	print "here"
 	artistName = request.args.get('artistName', 0, type=str)
 	#list(c.find({"artistName":artistName}, limit=20))
-	return jsonify(result = list(c.find({"artistName":artistName}, limit=20)))
+	return jsonify(result = list(c.find({"artistName":artistName}, limit=200)))
 	
 @app.route('/')
 def index():

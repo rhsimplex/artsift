@@ -43,6 +43,7 @@
 			.attr("height",h);
 	
 	var date_format = d3.time.format("%Y-%m-%d");
+	var composition_date_format = d3.time.format("%Y")
 	
 	var auction_dateFn = function(d){return date_format.parse(d.auctionDate)}
 	var auction_priceFnEUR = function(d){return d.priceEUR}
@@ -50,16 +51,10 @@
 	var artTitle = function(d){return d.artTitle}
 	var compositionDate = function(d){
 		try {
-			var comp_date = parseInt(d.compositionDate);
-			if (comp_date > 100){
-				return comp_date;
+			return  composition_date_format.parse(d.date)
 			}
-			else {
-				return -10000;
-			}
-		}
 		catch(err) {
-			return -10000;
+			return composition_date_format.parse("0000");
 		}
 	}
       $.getJSON($SCRIPT_ROOT + '/_get_artist_data', {
@@ -92,17 +87,14 @@
 			//.attr("x", function(d) { return x(auction_dateFn(d)) })
 			//.attr("y", function(d) { return y(auction_priceFn(d)) });
 			
-		  svg.append("g")
-			.attr("class", "axis")
-			.attr("transform", "translate(0," + (h - padding + 10) + ")")
-			.call(xAxis);
+
 			
 		  svg.append("text")
-			.attr("class", "x_label")
+			.attr("id", "x_label")
 			.attr("text-anchor", "end")
 			.attr("x", w/2 + padding)
 			.attr("y", h)
-			.text("Auction Date")
+			.text("Auction Date");
 			
 		  svg.append("text")
 			.attr("id", "y_label")
@@ -112,15 +104,42 @@
 			.text("Price (USD)");
 			
 		  svg.append("g")
-			.attr("class", "axis")
+			.attr("class", "y axis")
 			.attr("transform", "translate(" + (padding - 10) + ", 0)")
 			.call(yAxis);
-		
+          
+          svg.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + (h - padding + 10) + ")")
+			.call(xAxis);	
+			
+		  var trans_ms = 700;		
 		  d3.select("svg").on("click", function() {
-			 if(d3.select("#y_label").text() == "Composition Date") {
-				 d3.select("#y_label").text("Price (USD)");
+			 if(d3.select("#x_label").text() == "Auction Date") {
+				 
+				 x.domain(d3.extent(data.result, compositionDate)).nice();
+				 svg.selectAll("circle").data(data.result)
+					.transition()
+					.duration(trans_ms)
+					.attr("cx", function(d){ return x(compositionDate(d)) });
+				
+				 svg.select(".x.axis")
+					.transition()
+					.duration(trans_ms)
+					.call(xAxis);
+				d3.select("#x_label").transition().text("Composition Year");
 			 } else {
-				d3.select("#y_label").text("Composition Date");
+				x.domain(d3.extent(data.result, auction_dateFn)).nice();
+				svg.selectAll("circle").data(data.result)
+					.transition()
+					.duration(trans_ms)
+					.attr("cx", function(d){ return x(auction_dateFn(d)) });
+				
+				svg.select(".x.axis")
+					.transition()
+					.duration(trans_ms)
+					.call(xAxis);
+				d3.select("#x_label").transition().text("Auction Date");
 			 }
 		  });
       });
