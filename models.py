@@ -10,7 +10,10 @@ from nltk.corpus import stopwords
 def materials_to_array(df, artistID, cutoff=5):
     sw = pd.Series(stopwords.words('english'))
     sw.loc[-1] = 'works'
-    words = pd.Series(np.concatenate(df[df.artistID == artistID].materials.str.split().values)).apply(lambda x: x.lower())
+    words = pd.Series(np.concatenate(df[df.artistID == artistID].materials.str.split().values)).apply(lambda x: x.lower().replace(',',''))
+    #common variants
+    words.replace('watercolour','watercolor', inplace=True)
+    words.replace('india', 'indian', inplace=True)
     goodwords = words[words.isin(sw) == False]
     common_word_count = np.unique(goodwords.values).shape[0]/cutoff
     word_counts = goodwords.value_counts()
@@ -19,7 +22,7 @@ def materials_to_array(df, artistID, cutoff=5):
     word_list = df[df.artistID == artistID].materials.str.split().apply(lambda x: map(lambda p: p.lower(),x))
 
     materials = pd.DataFrame(np.zeros((df[df.artistID == artistID].shape[0],wc.shape[0])), columns = wc, index=df[df.artistID == artistID].index)
-    for material in materials.index:
+    for material in materials.columns:
             for i, val in word_list.iteritems():
                 materials[material].ix[i] = material in val
     return materials
@@ -38,10 +41,11 @@ def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'measur
     DOD = 10000
     
     if 'date' in X_labels:
-        artist_price_trend = artist_price_trend[artist_price_trend['date'] != u'']
+        #artist_price_trend = artist_price_trend[artist_price_trend['date'] != u'']
+        #artist_price_trend[artist_price_trend['date'] == u''] = 'abc'
         artist_price_trend.date = artist_price_trend.date.str.findall('\d{4}').str.get(0)
-        artist_price_trend = artist_price_trend.dropna()
-        artist_price_trend.date = artist_price_trend.date.astype('int64')
+        #artist_price_trend = artist_price_trend.dropna()
+        #artist_price_trend.date = artist_price_trend.date.astype('64')
         try:
             DOB = int(df[df.artistID == artistID]['artistDOB'].iloc[0])
         except ValueError:
