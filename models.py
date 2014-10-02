@@ -61,7 +61,7 @@ def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'measur
     if 'measurements' in X_labels:
         def area(dimlist):
             if len(dimlist) == 4:
-                return float(dimlist[1])*float(dimlist[3])
+                return float(dimlist[1].replace(',',''))*float(dimlist[3].replace(',',''))
             else:
                 return None
         m = apt['measurements'].str.findall('\\d+.\\d+').apply(area)
@@ -113,6 +113,7 @@ LINEAR_MODELS = {
             },
         ),
     }
+
 
 def search_artist_regression(df, artistID, model_name, _verbose=4):
     model, param_grid =LINEAR_MODELS[model_name] 
