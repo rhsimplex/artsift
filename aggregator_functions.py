@@ -17,8 +17,14 @@ def tag_to_tags(string, omitted_words):
     return list( set(string.lower().split()) - omitted_words )
 
 def add_tags(json_entry, omitted_words):
-    json_entry['note_tags'] = tag_to_tags(json_entry['lotNote'], omitted_words)
-    json_entry['material_tags'] = tag_to_tags(json_entry['materials'], omitted_words)
+    try:
+        json_entry['note_tags'] = tag_to_tags(json_entry['lotNote'], omitted_words)
+    except KeyError:
+        json_entry['note_tags'] = []
+    try:
+        json_entry['material_tags'] = tag_to_tags(json_entry['materials'], omitted_words)
+    except KeyError:
+        json_entry['material_tags'] = []
     try:
         json_entry['area'] = area(re.findall('\\d+.\\d+', json_entry['measurements']))
     except ValueError:
