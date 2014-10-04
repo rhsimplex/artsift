@@ -37,3 +37,9 @@ def iterate_over_db(db_name='asi_database', coll_name='asi_collection'):
 
     while curs.alive:
         c.save(add_tags(curs.next(), omitted_words))
+
+def main():
+    iterate_over_db()
+
+if __name__ == "__main__":
+    main()
