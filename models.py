@@ -27,12 +27,13 @@ def materials_to_array(df, artistID, cutoff=5):
                 materials[material].ix[i] = material in val
     return materials
 
-def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'measurements', 'materials'], y_label='priceUSD', halflife = 50):
+def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'measurements', 'materials'], y_label='priceUSD', halflife = 50, na_method = None):
     '''
     Generates DFs suitable for sklearn (just add .values!) from the given feature labels and target, dropping NAs as applicable
     '''
     artist_price_trend = df[df['artistID']==artistID][X_labels + [y_label]]
-    #artist_price_trend = artist_price_trend.dropna()
+    if na_method == 'all':
+        artist_price_trend.dropna(inplace=True)
 
     if 'auctionDate' in X_labels:
         artist_price_trend['auctionDate'] = pd.to_datetime(artist_price_trend['auctionDate']).astype(np.int64)
