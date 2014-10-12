@@ -1,7 +1,9 @@
 import numpy as np
 import re
 import pymongo
+import pickle
 from nltk.corpus import stopwords
+from bson.son import SON
 
 def area(dimlist):
     if len(dimlist) == 4:
@@ -44,8 +46,22 @@ def iterate_over_db(db_name='asi_database', coll_name='asi_collection'):
     while curs.alive:
         c.save(add_tags(curs.next(), omitted_words))
 
+
+def aggregate_tags(db_name='asi_database', coll_name='asi_collection', tag='material_tags'): 
+    client = pymongo.MongoClient()
+    db = client[db_name]
+    c = db[coll_name]
+    aggregation = c.aggregate([
+        {"$unwind": ''.join(['$', tag])},
+        {"$group": {'_id': ''.join(['$', tag]), "count":{"$sum": 1}}},
+        {"$sort": SON([("count", -1),('_id', -1)])}
+        ])
+    with open(tag + '.pickle', 'wb') as out:
+        pickle.dump(aggregation, out)
+    return aggregation
+
 def main():
-    iterate_over_db()
+    aggregate_tags()
 
 if __name__ == "__main__":
     main()

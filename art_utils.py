@@ -76,7 +76,7 @@ def image_compare(df, IMAGES_DIR='/home/ryan/asi_images/'):
                     #mean([sum(img1 > 0.9), sum(img2 > 0.9)])] 
                     std(img1)+std(img2)/2.]
        )
-    return DataFrame(return_list, columns=['id1','id2','r2diff', 'fftdiff', 'meanthresh'])
+    return DataFrame(return_list, columns=['id1','id2','r2diff', 'fftdiff', 'stdavg'])
 
+def image_compare_from_db(source_collection='asi_collection', target_collection='duplicate_images'):
 
-        
