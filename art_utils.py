@@ -10,6 +10,9 @@ from numpy import mean, std,  sum
 from itertools import combinations
 from pandas import DataFrame
 
+import pymongo
+import datetime
+
 def repeated_sales(df, artistname, artname, r2thresh=7000, fftr2thresh=10000, IMAGES_DIR='/home/ryan/asi_images/'):
     """
         Takes a dataframe, artistname and artname and tries to decide, via image matching, if there is a repeat sale. Returns a dict of lot_ids, each entry a list of repeat sales
@@ -55,7 +58,7 @@ def image_compare(df, IMAGES_DIR='/home/ryan/asi_images/'):
     paths.index = paths._id
     paths = paths.images
     if paths.shape[0] < 2:
-        return {}
+        return DataFrame([])
     for id_pair in combinations(paths.index, 2):
         if id_pair[0] in img_buffer:
             img1 = img_buffer[id_pair[0]]
@@ -78,5 +81,31 @@ def image_compare(df, IMAGES_DIR='/home/ryan/asi_images/'):
        )
     return DataFrame(return_list, columns=['id1','id2','r2diff', 'fftdiff', 'stdavg'])
 
-def image_compare_from_db(source_collection='asi_collection', target_collection='duplicate_images'):
+def image_compare_from_db(database='asi_database', source_collection='asi_collection', target_collection='duplicate_images', IMAGES_DIR='/home/ryan/asi_images/'):
+    client = pymongo.MongoClient()
+    db = client[database]
+    
+    c = db[source_collection]
+    c_target = db[target_collection]
 
+    artistIDs = pymongo.cursor.Cursor.distinct(c.find({}), 'artistID')
+    
+    for ID in artistIDs:
+        df = DataFrame(list(c.find({'artistID':ID})))
+        title_counts = df['artTitle'].value_counts()
+        title_counts = title_counts[title_counts > 1]
+        for title in title_counts.index:
+            ret = image_compare(df[df['artTitle'] == title], IMAGES_DIR = IMAGES_DIR)
+            if ret.shape[0] > 0:
+                json_out = eval(image_compare(df[df['artTitle'] == title], IMAGES_DIR = IMAGES_DIR).to_json(orient='records').replace('null', 'None'))
+                for rec in json_out:
+                    rec['id1'] = int(rec['id1'])
+                    rec['id2'] = int(rec['id2'])
+
+                c_target.insert(json_out)
+           
+def main():
+    image_compare_from_db()
+
+if __name__ == '__main__':
+    main()
