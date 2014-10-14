@@ -4,6 +4,7 @@ import pymongo
 import pickle
 from nltk.corpus import stopwords
 from bson.son import SON
+from pandas import DataFrame
 
 def area(dimlist):
     if len(dimlist) == 4:
@@ -60,8 +61,37 @@ def aggregate_tags(db_name='asi_database', coll_name='asi_collection', tag='mate
         pickle.dump(aggregation, out)
     return aggregation
 
+def load_filter_tags(exclude_tags='results/exclude.csv'):
+    exclude_words=[]
+    duplicate_sets=[]
+    exclude_set = True
+    with open(exclude_tags, 'r') as f:
+        for line in f.readlines():
+            if exclude_set:
+                if line.strip() == '':
+                    exclude_set = False
+                else:
+                    exclude_words.append(line.strip())
+            else:
+                duplicate_sets.append(map(lambda x: x.strip(), line.split()))
+    return exclude_words, duplicate_sets
+
+def filter_tags(tag_pickle='results/material_tags.pickle', exclude_tags='results/exclude.csv', n=50):
+    exclude_words, duplicate_sets = load_filter_tags(exclude_tags)
+    with open(tag_pickle, 'r') as f:
+        t = DataFrame(pickle.load(f)['result']).set_index('_id')
+    for setn in duplicate_sets:
+        t.ix[setn[0]] += sum(map(lambda x: t.ix[x] , setn[1:]))
+        for tag in setn[1:]:
+            t.drop(tag, inplace=True)
+    for tag in exclude_words:
+        t.drop(tag, inplace=True)
+    t.sort(ascending=False)
+    return t[:n].index
+ 
 def main():
-    aggregate_tags()
+    #aggregate_tags(db_name='asi-database')
+    pass
 
 if __name__ == "__main__":
     main()
