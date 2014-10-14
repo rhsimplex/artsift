@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import aggregator_functions
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.gaussian_process import GaussianProcess
@@ -27,7 +28,7 @@ def materials_to_array(df, artistID, cutoff=5):
                 materials[material].ix[i] = material in val
     return materials
 
-def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'measurements', 'materials'], y_label='priceUSD', halflife = 50, na_method = None):
+def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'area', 'material_tags'], y_label='priceUSD', halflife = 50, na_method = None, n_tags=25):
     '''
     Generates DFs suitable for sklearn (just add .values!) from the given feature labels and target, dropping NAs as applicable
     '''
@@ -77,9 +78,32 @@ def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'measur
         apt = apt.join(materials)
         apt.drop('materials', axis=1, inplace=True)
 
+    if 'material_tags' in X_labels:
+        mat_tags = apt['material_tags'].values
+        tags = aggregator_functions.filter_tags(n=n_tags)
+        tag_array = np.zeros((apt.shape[0], n_tags))
+        td = dict(zip(tags, range(len(tags))))
+        for i, tag_list in enumerate( mat_tags ):
+            for word in tag_list:
+                try:
+                    tag_array[i][td[word]] = 1
+                except KeyError:
+                    pass
+        apt = apt.join(pd.DataFrame(tag_array, index=apt.index, columns=tags))
+        apt.drop('material_tags', axis=1, inplace=True)
+    
     if 'auctionDate' in X_labels:
         apt.sort('auctionDate', inplace=True)
     return apt.astype('float64')
+
+def to_vec(wl, td, n_tags):
+    vec = np.zeros(n_tags)
+    for word in wl:
+        try:
+            vec[td[word]] = 1
+        except KeyError:
+            pass
+    return vec
 
 LINEAR_MODELS = {
     'linear_regression': (
