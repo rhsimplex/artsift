@@ -60,6 +60,17 @@ class AggregateClusterLinear(BaseEstimator, RegressorMixin):
         y = y[np.argsort(y[:,0])]
         return y[:,1]
 
+    def get_top_scores(self, min_n=10, min_r2=0.0 ):
+        self.top_scores = []
+        for key in self.scores.keys():
+            for clus_key in self.scores[key].keys():
+                splitid = key
+                clus_id = clus_key
+                pair = self.scores[key][clus_key]
+                if pair[0] >= min_n and pair[1] >= min_r2:
+                    self.top_scores.append([splitid, clus_id, pair[0], pair[1]])
+        return np.array(self.top_scores)
+
 class ClusterLinear(BaseEstimator, RegressorMixin):
     """Attempts to cluster data before regression"""
     def __init__(self, Clusterer='kmeans', Regressor='ridge'):
