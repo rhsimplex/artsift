@@ -51,11 +51,17 @@ def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'area',
         try:
             DOB = int(df[df.artistID == artistID]['artistDOB'].iloc[0])
         except ValueError:
-            DOB = artist_price_trend.date.mean() - halflife
+            try:
+                DOB = artist_price_trend.date.mean() - halflife
+            except TypeError:
+                pass
         try:
             DOD = int(df[df.artistID == artistID]['artistDOD'].iloc[0])
         except ValueError:
-            DOD = artist_price_trend.date.mean() + halflife
+            try:
+                DOD = artist_price_trend.date.mean() + halflife
+            except TypeError:
+                pass
 
     #apt = artist_price_trend[(artist_price_trend.date > DOB) & (artist_price_trend.date < DOD)]
     apt = artist_price_trend

@@ -4,6 +4,7 @@ from sklearn.cluster import KMeans, MeanShift, AffinityPropagation
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
+from sklearn.metrics import r2_score
 
 class AggregateClusterLinear(BaseEstimator, RegressorMixin):
     """Applies many cluster linears to a dataset. """
@@ -15,9 +16,11 @@ class AggregateClusterLinear(BaseEstimator, RegressorMixin):
         else:
             self.alpha = regularization_alpha
 
-    def fit(self, X, y, split_on_=0):
+    def fit(self, X, y, split_on_=0, scoring=True):
         self.split_on = split_on_
         self.models = {}
+        if scoring:
+            self.scores = {}
         unique_indices = np.unique(X[:, self.split_on])
         for i in unique_indices:
             self.models[i] = ClusterLinear()
@@ -26,7 +29,20 @@ class AggregateClusterLinear(BaseEstimator, RegressorMixin):
             self.models[i].clus.n_clusters = int(self.cf(Xpart.shape[0]))
             self.models[i].reg.alpha = self.alpha 
             self.models[i].fit(Xpart[:, np.lib.setdiff1d(np.arange(Xpart.shape[1]),[self.split_on])], ypart)
-
+            if scoring:
+            ##    self.scores[i] = r2_score(ypart, self.models[i].predict(Xpart[:, np.lib.setdiff1d(np.arange(Xpart.shape[1]),[self.split_on])]))
+            ##  
+                class_dict = {}
+                class_labels = self.models[i].clus.predict(Xpart[:, np.lib.setdiff1d(np.arange(Xpart.shape[1]),[self.split_on])])
+                y_pred = np.zeros(class_labels.shape[0])
+                
+                for label in np.unique(class_labels):    
+                    indices = np.where(class_labels == label)
+                    y_pred[indices] = self.models[i].reg_models[label].predict(Xpart[:, np.lib.setdiff1d(np.arange(Xpart.shape[1]),[self.split_on])][indices])
+                    class_dict[label] = (ypart[indices].shape[0], r2_score(ypart[indices], y_pred[indices]))
+                self.scores[i] = class_dict
+        return self
+    
     def predict(self, X):
         X = X.copy()
         #attach sentinel variables to the array so they can be sorted later
@@ -68,26 +84,7 @@ class ClusterLinear(BaseEstimator, RegressorMixin):
             self.reg = LinearRegression()
 
     def fit(self, X, y):
-        """
-        if self.Clusterer == 'affinity':
-            self.clus = AffinityPropagation()
-        elif self.Clusterer == 'meanshift':
-            self.clus = MeanShift()
-        elif self.Clusterer == 'kmeans':
-            self.clus = KMeans()
-                
-        if self.Regressor == 'ridge':
-            self.reg = Ridge()
-        elif self.Regressor == 'randomforest':
-            self.reg = RandomForestRegressor()
-        elif self.Regressor == 'lasso':
-            self.reg = Lasso()
-        elif self.Regressor == 'linear':
-            self.reg = LinearRegression()
-        """
-
         self.reg_models = {}
-
         y_cluster = scale(y)
         
         self.clus.fit(np.concatenate((X, y_cluster.reshape((1,y_cluster.shape[0])).T), axis=1))
