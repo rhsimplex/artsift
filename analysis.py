@@ -27,7 +27,7 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
 
     for i in df.artistID.value_counts().index:
         try:
-            s.append(artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD'), n_tags=50)
+            s.append(artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD', n_tags=50))
         except KeyError:
             pass ####
             
@@ -90,6 +90,11 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
     return dfresults
 
 def main():
+    dfresults = analyze(n_artists=15, db_name = 'asi-database', daterange = ('2001-01-01', '2014-01-01'), labels=['date','area','material_tags'])
+    dfresults.to_csv('test.csv')
+
+    print 'Test success!'
+    
     dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2001-01-01', '2014-01-01'), labels=['date','area','material_tags'])
     dfresults.to_csv('results_2001_2014.csv')
     dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2005-01-01', '2014-01-01'))
