@@ -8,14 +8,17 @@ from models import artist_df_to_ts_array
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
 
-def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'date'], y_label='priceUSD', verbose=True):
+def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'date'], y_label='priceUSD', verbose=True, daterange = ('2001-01-01', '2014-01-01'), db_name='asi_database'):
     s = []
     if verbose:
         print 'Building dataframe...',
         sys.stdout.flush()
 
-    df = get_df_from_db(n_artists, min_works=min_works)
+    df = get_df_from_db(n_artists, min_works=min_works, db_name=db_name)
     df.set_index('_id', inplace=True)
+    ad = pd.to_datetime(df.auctionDate)
+    df = df[(ad > daterange[0]) & (ad < daterange[1])]
+
     if verbose:
         print 'done. %d records.' % df.shape[0]
         sys.stdout.flush()
@@ -24,7 +27,7 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
 
     for i in df.artistID.value_counts().index:
         try:
-            s.append(artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD'))
+            s.append(artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD'), n_tags=50)
         except KeyError:
             pass ####
             
@@ -84,5 +87,15 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
             dfresults.time_r2.ix[df_temp.index.values] = r2
             dfresults.coef.ix[df_temp.index.values] = coef
 
-    return acl, dfresults, df
+    return dfresults
 
+def main():
+    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2001-01-01', '2014-01-01'), labels=['date','area','material_tags'])
+    dfresults.to_csv('results_2001_2014.csv')
+    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2005-01-01', '2014-01-01'))
+    dfresults.to_csv('results_2005_2014.csv')
+    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2013-01-01', '2014-01-01'))
+    dfresults.to_csv('results_2013_2014.csv')
+
+if __name__ == '__main__':
+    main()
