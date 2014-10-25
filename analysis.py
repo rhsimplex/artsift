@@ -35,6 +35,10 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
         print 'done.'
         sys.stdout.flush()
     x = pd.concat(s).dropna()
+    #move y_label to last position
+    l = x.columns.tolist()
+    l.append(l.pop(l.index(y_label)))
+    x = x[l]
 
     X = x.values[:,:-1]
     y = x.values[:,-1]
@@ -95,12 +99,12 @@ def main():
 
     print 'Test success!'
     
-    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2001-01-01', '2014-01-01'), labels=['artistID', 'date','area','material_tags'])
-    dfresults.to_csv('results_2001_2014.csv')
-    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2005-01-01', '2014-01-01'), labels=['artistID', 'date','area','material_tags'])
-    dfresults.to_csv('results_2005_2014.csv')
     dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2013-01-01', '2014-01-01'), labels=['artistID', 'date','area','material_tags'])
     dfresults.to_csv('results_2013_2014.csv')
+    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2005-01-01', '2014-01-01'), labels=['artistID', 'date','area','material_tags'])
+    dfresults.to_csv('results_2005_2014.csv')
+    dfresults = analyze(n_artists=300000, db_name = 'asi-database', daterange = ('2001-01-01', '2014-01-01'), labels=['artistID', 'date','area','material_tags'])
+    dfresults.to_csv('results_2001_2014.csv')
 
 if __name__ == '__main__':
     main()
