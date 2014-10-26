@@ -24,8 +24,12 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
         sys.stdout.flush()
         print 'Converting dataframe to array...',
         sys.stdout.flush()
-
-    for i in df.artistID.value_counts().index:
+    if verbose:
+	length_artists = df.artistID.value_counts().index.shape[0]
+        print 'No. artists: ' + str(length_artists)
+    for ind, i in enumerate(df.artistID.value_counts().index):
+	if verbose:
+            print 'Artist ' + str(i) + ' (' + str(ind) + ' of ' + str(length_artists) + ')'
         try:
             if x is None:
                 x = artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD', n_tags=50)
