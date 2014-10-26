@@ -32,7 +32,7 @@ def artist_df_to_ts_array(df, artistID, X_labels=['auctionDate', 'date', 'area',
     '''
     Generates DFs suitable for sklearn (just add .values!) from the given feature labels and target, dropping NAs as applicable
     '''
-    artist_price_trend = df[df['artistID']==artistID][X_labels + [y_label]]
+    artist_price_trend = df[df['artistID']==artistID][X_labels + [y_label]].copy()
     if na_method == 'all':
         artist_price_trend.dropna(inplace=True)
 

@@ -13,7 +13,7 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
     if verbose:
         print 'Building dataframe...',
         sys.stdout.flush()
-
+    x = None
     df = get_df_from_db(n_artists, min_works=min_works, db_name=db_name)
     df.set_index('_id', inplace=True)
     ad = pd.to_datetime(df.auctionDate)
@@ -27,14 +27,18 @@ def analyze(n_artists = 500, min_works=50, labels=['artistID', 'auctionDate', 'd
 
     for i in df.artistID.value_counts().index:
         try:
-            s.append(artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD', n_tags=50))
+            if x is None:
+                x = artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD', n_tags=50)
+            else:
+                x = pd.concat([x, artist_df_to_ts_array(df, i, X_labels=labels, y_label='priceUSD', n_tags=50)] )
         except KeyError:
             pass ####
             
     if verbose:
         print 'done.'
         sys.stdout.flush()
-    x = pd.concat(s).dropna()
+    #x = pd.concat(s).dropna()
+    x.dropna(inplace=True)
     #move y_label to last position
     l = x.columns.tolist()
     l.append(l.pop(l.index(y_label)))
